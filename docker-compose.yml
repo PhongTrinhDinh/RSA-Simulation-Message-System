@@ -1,0 +1,101 @@
+services:
+  # ── Central Router / Key Server ──
+  router:
+    build: ./router
+    container_name: router
+    hostname: router
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./shared:/app/shared
+      - ./data:/app/data
+    environment:
+      - DB_PATH=/app/data/router.db
+    networks:
+      - sandbox-net
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  # ── Alice (User Node) ──
+  alice:
+    build: ./node
+    container_name: alice
+    hostname: alice
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./shared:/app/shared
+    environment:
+      - NODE_NAME=alice
+      - ROUTER_URL=http://router:5000
+      - NODE_PORT=3000
+    depends_on:
+      router:
+        condition: service_healthy
+    networks:
+      - sandbox-net
+
+  # ── Bob (User Node) ──
+  bob:
+    build: ./node
+    container_name: bob
+    hostname: bob
+    ports:
+      - "3002:3000"
+    volumes:
+      - ./shared:/app/shared
+    environment:
+      - NODE_NAME=bob
+      - ROUTER_URL=http://router:5000
+      - NODE_PORT=3000
+    depends_on:
+      router:
+        condition: service_healthy
+    networks:
+      - sandbox-net
+
+  # ── Charlie (User Node) ──
+  charlie:
+    build: ./node
+    container_name: charlie
+    hostname: charlie
+    ports:
+      - "3003:3000"
+    volumes:
+      - ./shared:/app/shared
+    environment:
+      - NODE_NAME=charlie
+      - ROUTER_URL=http://router:5000
+      - NODE_PORT=3000
+    depends_on:
+      router:
+        condition: service_healthy
+    networks:
+      - sandbox-net
+
+  # ── Eve (Attacker Node) ──
+  eve:
+    build: ./eve
+    container_name: eve
+    hostname: eve
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./shared:/app/shared
+      - ./data/attack_results:/app/results
+    environment:
+      - ROUTER_URL=http://router:5000
+    depends_on:
+      router:
+        condition: service_healthy
+    networks:
+      - sandbox-net
+
+networks:
+  sandbox-net:
+    driver: bridge
+    name: sandbox-net

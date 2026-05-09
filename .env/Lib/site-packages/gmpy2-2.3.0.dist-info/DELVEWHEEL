@@ -1,0 +1,2 @@
+Version: 1.12.0
+Arguments: ['C:\\Users\\runneradmin\\AppData\\Local\\Temp\\cibw-run-z6cp22en\\cp312-win_amd64\\build\\venv\\Scripts\\delvewheel', 'repair', 'C:\\Users\\runneradmin\\AppData\\Local\\Temp\\cibw-run-z6cp22en\\cp312-win_amd64\\built_wheel\\gmpy2-2.3.0-cp312-cp312-win_amd64.whl', '-w', 'C:\\Users\\runneradmin\\AppData\\Local\\Temp\\cibw-run-z6cp22en\\cp312-win_amd64\\repaired_wheel', '--add-path', '.local/bin', '--no-mangle-all']

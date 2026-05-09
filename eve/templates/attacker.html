@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EVE — Attacker Dashboard | OTT Sandbox</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #050810;
+            --bg-secondary: #0c1021;
+            --bg-card: #111631;
+            --bg-card-hover: #161d40;
+            --accent: #ef4444;
+            --accent-2: #f97316;
+            --accent-glow: rgba(239,68,68,0.25);
+            --cyber: #06d6a0;
+            --cyber-glow: rgba(6,214,160,0.2);
+            --purple: #8b5cf6;
+            --blue: #3b82f6;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --text-muted: #475569;
+            --border: #1e293b;
+            --radius: 12px;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+        /* ── Header ── */
+        .header {
+            background: linear-gradient(180deg, rgba(239,68,68,0.08), transparent);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 32px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .header .brand {
+            display: flex; align-items: center; gap: 12px;
+        }
+        .header .brand .skull {
+            width: 40px; height: 40px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 0 24px var(--accent-glow);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%,100% { box-shadow: 0 0 24px var(--accent-glow); }
+            50% { box-shadow: 0 0 40px var(--accent-glow), 0 0 60px rgba(239,68,68,0.1); }
+        }
+        .header .brand h1 { font-size: 20px; font-weight: 700; }
+        .header .brand h1 span { color: var(--accent); }
+        .header .controls { display: flex; gap: 12px; align-items: center; }
+        .profile-select {
+            padding: 8px 16px; border-radius: 8px;
+            background: var(--bg-card); border: 1px solid var(--border);
+            color: var(--text-primary); font-family: 'Inter', sans-serif;
+            font-size: 13px; cursor: pointer;
+        }
+        .btn {
+            padding: 8px 16px; border-radius: 8px; border: none;
+            font-family: 'Inter', sans-serif; font-size: 13px;
+            font-weight: 500; cursor: pointer; transition: all 0.2s;
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, var(--accent), #dc2626);
+            color: white;
+        }
+        .btn-danger:hover { box-shadow: 0 0 20px var(--accent-glow); transform: translateY(-1px); }
+        .btn-ghost {
+            background: var(--bg-card); color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+        .btn-ghost:hover { border-color: var(--accent); color: var(--text-primary); }
+        /* ── Status Bar ── */
+        .status-bar {
+            display: flex; gap: 24px; padding: 12px 32px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-secondary);
+        }
+        .status-item {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 12px; color: var(--text-secondary);
+        }
+        .status-item .dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: var(--cyber);
+            box-shadow: 0 0 8px var(--cyber-glow);
+        }
+        .status-item .val { color: var(--cyber); font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+        /* ── Grid Layout ── */
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto auto;
+            gap: 16px;
+            padding: 24px 32px;
+            max-height: calc(100vh - 120px);
+            overflow-y: auto;
+        }
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+        .card-header {
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .card-header h3 {
+            font-size: 13px; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        .card-header .badge {
+            font-size: 11px; padding: 2px 8px;
+            border-radius: 20px; font-weight: 600;
+        }
+        .card-body { padding: 16px 20px; }
+        /* ── Traffic Monitor ── */
+        .traffic-card { grid-column: 1 / -1; }
+        .traffic-table {
+            width: 100%; border-collapse: collapse;
+            font-size: 12px;
+        }
+        .traffic-table th {
+            text-align: left; padding: 8px 12px;
+            color: var(--text-muted); font-weight: 600;
+            font-size: 10px; text-transform: uppercase;
+            letter-spacing: 1px; border-bottom: 1px solid var(--border);
+        }
+        .traffic-table td {
+            padding: 8px 12px; border-bottom: 1px solid rgba(30,41,59,0.5);
+            font-family: 'JetBrains Mono', monospace; font-size: 11px;
+        }
+        .traffic-table tr { transition: background 0.15s; }
+        .traffic-table tr:hover { background: var(--bg-card-hover); }
+        .traffic-table .dir { color: var(--cyber); }
+        .traffic-table .cipher { color: var(--text-muted); max-width: 300px;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .traffic-table .time { color: var(--text-secondary); }
+        .traffic-scroll { max-height: 250px; overflow-y: auto; }
+        /* ── Attack Arsenal ── */
+        .attack-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .attack-btn {
+            padding: 12px 16px; border-radius: 8px;
+            background: var(--bg-secondary); border: 1px solid var(--border);
+            text-align: left; cursor: pointer; transition: all 0.2s;
+            position: relative; overflow: hidden;
+        }
+        .attack-btn:hover {
+            border-color: var(--accent);
+            background: var(--bg-card-hover);
+            box-shadow: 0 0 16px rgba(239,68,68,0.1);
+        }
+        .attack-btn::before {
+            content: ''; position: absolute; top: 0; left: 0;
+            width: 3px; height: 100%;
+            background: linear-gradient(180deg, var(--accent), var(--accent-2));
+            opacity: 0; transition: opacity 0.2s;
+        }
+        .attack-btn:hover::before { opacity: 1; }
+        .attack-btn .attack-name {
+            font-size: 12px; font-weight: 600; color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        .attack-btn .attack-desc {
+            font-size: 10px; color: var(--text-muted); line-height: 1.4;
+        }
+        .attack-btn.disabled {
+            opacity: 0.4; cursor: not-allowed;
+        }
+        .attack-btn .attack-status {
+            position: absolute; top: 8px; right: 8px;
+            font-size: 10px; padding: 2px 6px; border-radius: 10px;
+        }
+        .attack-btn .attack-status.ready {
+            background: rgba(6,214,160,0.15); color: var(--cyber);
+        }
+        .attack-btn .attack-status.wrong-profile {
+            background: rgba(245,158,11,0.15); color: var(--accent-2);
+        }
+        /* ── Attack Results ── */
+        .result-panel { max-height: 400px; overflow-y: auto; }
+        .result-item {
+            padding: 12px; border-radius: 8px;
+            margin-bottom: 8px; border: 1px solid var(--border);
+            background: var(--bg-secondary);
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+        .result-item.success { border-left: 3px solid var(--cyber); }
+        .result-item.fail { border-left: 3px solid var(--accent); }
+        .result-item .r-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 8px;
+        }
+        .result-item .r-name { font-size: 13px; font-weight: 600; }
+        .result-item .r-badge {
+            font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 600;
+        }
+        .result-item .r-badge.ok { background: rgba(6,214,160,0.15); color: var(--cyber); }
+        .result-item .r-badge.fail { background: rgba(239,68,68,0.15); color: var(--accent); }
+        .result-item .r-detail {
+            font-size: 11px; font-family: 'JetBrains Mono', monospace;
+            color: var(--text-secondary); line-height: 1.6;
+            background: var(--bg-primary); padding: 8px;
+            border-radius: 6px; max-height: 120px; overflow-y: auto;
+            word-break: break-all;
+        }
+        .result-item .r-time {
+            font-size: 10px; color: var(--text-muted); margin-top: 6px;
+        }
+        /* ── Loading ── */
+        .spinner {
+            display: inline-block; width: 14px; height: 14px;
+            border: 2px solid var(--border); border-top-color: var(--accent);
+            border-radius: 50%; animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="brand">
+            <div class="skull">👁</div>
+            <h1><span>EVE</span> — Attacker Dashboard</h1>
+        </div>
+        <div class="controls">
+            <select class="profile-select" id="profileSelect" onchange="setProfile(this.value)">
+                <option value="">Loading profiles...</option>
+            </select>
+            <button class="btn btn-ghost" onclick="resetSystem()">🔄 Reset</button>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <div class="status-item">
+            <div class="dot"></div>
+            <span>Profile:</span>
+            <span class="val" id="currentProfile">—</span>
+        </div>
+        <div class="status-item">
+            <div class="dot"></div>
+            <span>Online:</span>
+            <span class="val" id="onlineCount">0</span>
+        </div>
+        <div class="status-item">
+            <div class="dot"></div>
+            <span>Traffic:</span>
+            <span class="val" id="trafficCount">0</span>
+        </div>
+        <div class="status-item">
+            <div class="dot"></div>
+            <span>Messages:</span>
+            <span class="val" id="msgCount">0</span>
+        </div>
+    </div>
+
+    <div class="grid">
+        <!-- Traffic Monitor -->
+        <div class="card traffic-card">
+            <div class="card-header">
+                <h3>📡 Network Traffic Monitor</h3>
+                <span class="badge" style="background:rgba(6,214,160,0.15);color:var(--cyber);">LIVE</span>
+            </div>
+            <div class="card-body" style="padding:0;">
+                <div class="traffic-scroll" id="trafficScroll">
+                    <table class="traffic-table">
+                        <thead>
+                            <tr>
+                                <th>Thời gian</th>
+                                <th>Hướng</th>
+                                <th>Loại</th>
+                                <th>Ciphertext</th>
+                                <th>Size</th>
+                            </tr>
+                        </thead>
+                        <tbody id="trafficBody">
+                            <tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:24px;">
+                                Đang chờ traffic...
+                            </td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attack Arsenal -->
+        <div class="card">
+            <div class="card-header">
+                <h3>⚔️ Attack Arsenal</h3>
+            </div>
+            <div class="card-body">
+                <div style="margin-bottom:12px;">
+                    <label style="font-size:11px;color:var(--text-muted);">Target:</label>
+                    <select id="targetSelect" class="profile-select" style="margin-left:8px;padding:4px 12px;">
+                        <option value="bob">Bob</option>
+                        <option value="alice">Alice</option>
+                        <option value="charlie">Charlie</option>
+                    </select>
+                </div>
+                <div class="attack-grid" id="attackGrid">
+                </div>
+            </div>
+        </div>
+
+        <!-- Attack Results -->
+        <div class="card">
+            <div class="card-header">
+                <h3>📊 Kết quả Tấn công</h3>
+                <span id="resultCount" class="badge" style="background:rgba(139,92,246,0.15);color:var(--purple);">0</span>
+            </div>
+            <div class="card-body result-panel" id="resultPanel">
+                <div style="text-align:center;color:var(--text-muted);padding:24px;font-size:13px;">
+                    Chưa có kết quả. Chọn attack để bắt đầu.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ATTACKS = [
+            {id:"brute_force", name:"Brute Force", desc:"Vét cạn key space (key nhỏ)", profile:"brute_force_demo"},
+            {id:"factor_n", name:"Factor n", desc:"Phân tích n (Fermat/Pollard)", profile:"factor_n_vulnerable"},
+            {id:"cca", name:"CCA Oracle", desc:"Chosen-Ciphertext Attack", profile:"cca_vulnerable"},
+        ];
+
+        let currentProfile = "safe";
+        let runningAttack = null;
+
+        function renderAttackGrid() {
+            const grid = document.getElementById('attackGrid');
+            grid.innerHTML = ATTACKS.map(a => {
+                const ready = currentProfile === a.profile;
+                return `
+                    <div class="attack-btn ${runningAttack===a.id?'disabled':''}"
+                         onclick="runAttack('${a.id}')" id="atk-${a.id}">
+                        <span class="attack-status ${ready?'ready':'wrong-profile'}">
+                            ${ready?'✓ Sẵn sàng':'⚠ '+a.profile}
+                        </span>
+                        <div class="attack-name">${a.name}</div>
+                        <div class="attack-desc">${a.desc}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function loadProfiles() {
+            try {
+                const r = await fetch('/api/profiles');
+                const data = await r.json();
+                const sel = document.getElementById('profileSelect');
+                sel.innerHTML = (data.profiles || []).map(p =>
+                    `<option value="${p.name}" ${p.name===currentProfile?'selected':''}>${p.name} — ${p.description}</option>`
+                ).join('');
+            } catch(e) { console.error(e); }
+        }
+
+        async function setProfile(name) {
+            try {
+                const r = await fetch('/api/set_profile', {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({profile: name}),
+                });
+                const data = await r.json();
+                if (data.status === 'ok') {
+                    currentProfile = name;
+                    renderAttackGrid();
+                }
+            } catch(e) { alert('Lỗi: ' + e); }
+        }
+
+        async function fetchState() {
+            try {
+                const r = await fetch('/api/state');
+                const data = await r.json();
+                currentProfile = data.profile || 'safe';
+                document.getElementById('currentProfile').textContent = currentProfile;
+                document.getElementById('onlineCount').textContent =
+                    (data.system?.online_users || []).length;
+                document.getElementById('trafficCount').textContent = data.traffic_count || 0;
+                document.getElementById('msgCount').textContent = data.system?.total_messages || 0;
+                renderAttackGrid();
+            } catch(e) { console.error(e); }
+        }
+
+        async function fetchTraffic() {
+            try {
+                const r = await fetch('/api/traffic');
+                const data = await r.json();
+                renderTraffic(data.traffic || []);
+            } catch(e) { console.error(e); }
+        }
+
+        function renderTraffic(traffic) {
+            const tbody = document.getElementById('trafficBody');
+            if (traffic.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:24px;">Đang chờ traffic...</td></tr>';
+                return;
+            }
+            const recent = traffic.slice(-30).reverse();
+            tbody.innerHTML = recent.map(t => {
+                const pkt = t.raw_packet || t;
+                const dir = t.direction || `${pkt.from||'?'} → ${pkt.to||'?'}`;
+                const ct = pkt.ciphertext || pkt.payload?.ciphertext || '';
+                const ts = t.captured_at || t.timestamp || 0;
+                const time = ts ? new Date(ts*1000).toLocaleTimeString('vi') : '—';
+                const type = t.type || pkt.type || '—';
+                return `<tr>
+                    <td class="time">${time}</td>
+                    <td class="dir">${dir}</td>
+                    <td>${type}</td>
+                    <td class="cipher">${ct.substring(0,50)}${ct.length>50?'...':''}</td>
+                    <td>${ct.length ? Math.ceil(ct.length/2)+'B' : '—'}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        async function runAttack(attackId) {
+            if (runningAttack) return;
+            runningAttack = attackId;
+            renderAttackGrid();
+            const target = document.getElementById('targetSelect').value;
+
+            const btn = document.getElementById('atk-' + attackId);
+            if (btn) btn.innerHTML = '<div class="spinner"></div> Đang chạy...';
+
+            try {
+                const r = await fetch('/api/attack', {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({attack: attackId, target_user: target}),
+                });
+                const result = await r.json();
+                addResult(result);
+            } catch(e) {
+                addResult({attack: attackId, success: false, error: e.toString()});
+            }
+
+            runningAttack = null;
+            renderAttackGrid();
+        }
+
+        function addResult(result) {
+            const panel = document.getElementById('resultPanel');
+            const isFirst = panel.querySelector('.result-item') === null;
+            if (isFirst) panel.innerHTML = '';
+
+            const div = document.createElement('div');
+            div.className = `result-item ${result.success ? 'success' : 'fail'}`;
+
+            let detail = '';
+            if (result.success) {
+                if (result.d) detail += `d = ${result.d}\n`;
+                if (result.p) detail += `p = ${result.p}\n`;
+                if (result.q) detail += `q = ${result.q}\n`;
+                if (result.plaintext) detail += `plaintext = "${result.plaintext}"\n`;
+                if (result.plaintext_int) detail += `m = ${result.plaintext_int}\n`;
+            } else {
+                detail = result.error || 'Unknown error';
+            }
+
+            div.innerHTML = `
+                <div class="r-header">
+                    <span class="r-name">${result.attack || '?'}</span>
+                    <span class="r-badge ${result.success?'ok':'fail'}">
+                        ${result.success?'✓ THÀNH CÔNG':'✗ THẤT BẠI'}
+                    </span>
+                </div>
+                <div class="r-detail">${escapeHtml(detail)}</div>
+                <div class="r-time">⏱ ${result.duration_ms || 0}ms</div>
+            `;
+
+            panel.prepend(div);
+            document.getElementById('resultCount').textContent =
+                panel.querySelectorAll('.result-item').length;
+        }
+
+        function escapeHtml(s) {
+            const d = document.createElement('div');
+            d.textContent = s;
+            return d.innerHTML;
+        }
+
+        async function resetSystem() {
+            if (!confirm('Reset toàn bộ hệ thống về trạng thái ban đầu?')) return;
+            await fetch('/api/reset', {method:'POST'});
+            location.reload();
+        }
+
+        // ── Init ──
+        loadProfiles();
+        fetchState();
+        fetchTraffic();
+        renderAttackGrid();
+        setInterval(fetchState, 3000);
+        setInterval(fetchTraffic, 2000);
+    </script>
+</body>
+</html>
